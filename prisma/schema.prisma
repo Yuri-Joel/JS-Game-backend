@@ -1,0 +1,65 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "mongodb"
+    url      = env("DATABASE_URL")
+}
+
+model Player {
+    id            String         @id @default(auto()) @map("_id") @db.ObjectId
+    username      String         @unique
+    email         String         @unique
+    games         PlayerGame[] // relação explícita
+    notifications Notification[]
+    createdAt     DateTime       @default(now())
+}
+
+model Game {
+    id         String         @id @default(auto()) @map("_id") @db.ObjectId
+    players    PlayerGame[] // relação explícita
+    questions  GameQuestion[] // relação explícita
+    status     String         @default("waiting") // waiting | playing | finished
+    scoreBoard Json?
+    createdAt  DateTime       @default(now())
+    updatedAt  DateTime       @updatedAt
+}
+
+model Question {
+    id         String         @id @default(auto()) @map("_id") @db.ObjectId
+    text       String
+    type       String // multiple_choice | code | true_false | real_case
+    options    String[] // apenas para multiple_choice
+    answer     String
+    difficulty String // easy | medium | hard
+    games      GameQuestion[] // relação explícita
+    createdAt  DateTime       @default(now())
+}
+
+model Notification {
+    id        String   @id @default(auto()) @map("_id") @db.ObjectId
+    playerId  String   @db.ObjectId
+    player    Player   @relation(fields: [playerId], references: [id])
+    message   String
+    read      Boolean  @default(false)
+    createdAt DateTime @default(now())
+}
+
+model PlayerGame {
+    id       String @id @default(auto()) @map("_id") @db.ObjectId
+    playerId String @db.ObjectId
+    gameId   String @db.ObjectId
+
+    player Player @relation(fields: [playerId], references: [id])
+    game   Game   @relation(fields: [gameId], references: [id])
+}
+
+model GameQuestion {
+    id         String @id @default(auto()) @map("_id") @db.ObjectId
+    gameId     String @db.ObjectId
+    questionId String @db.ObjectId
+
+    game     Game     @relation(fields: [gameId], references: [id])
+    question Question @relation(fields: [questionId], references: [id])
+}
