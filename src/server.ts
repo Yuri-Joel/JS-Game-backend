@@ -1,26 +1,24 @@
-import { createServer } from "http";
 import { Server as SocketIOServer } from "socket.io";
 import { buildApp } from "./app";
 import registerGameSocket from "./sockets/game.socket";
-
 const app = buildApp();
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8800;
 
-// Criamos servidor HTTP a partir do Fastify
-const server = createServer(app.server);
-
-// Socket.IO
+const server = app.server;
 const io = new SocketIOServer(server, {
   cors: {
-    origin: "*", // 👉 em produção: restringir para o frontend
+    origin: "*",
   },
 });
 
-// Registra eventos do jogo
 registerGameSocket(io);
 
-// Inicia servidor
-server.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+// Inicia o Fastify normalmente
+app.listen({ port: Number(PORT), host: "0.0.0.0" }, (err, address) => {
+  if (err) {
+    console.error(err);
+    process.exit(1);
+  }
+  console.log(`🚀 Server running on ${address}`);
 });
